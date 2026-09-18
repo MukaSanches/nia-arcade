@@ -288,15 +288,38 @@ private fun GameScreen(game: Game, onExit: () -> Unit) {
     val webView = remember(game.id) { GameWebView(context).apply { load(game) } }
     var paused by remember { mutableStateOf(false) }
     var showControls by remember { mutableStateOf(true) }
+    val pauseFocus = remember { FocusRequester() }
+
+    fun openPause() {
+        if (!paused) paused = true
+    }
+
+    fun resume() {
+        paused = false
+        webView.resumeGame()
+    }
 
     DisposableEffect(webView) {
-        webView.onBackRequested = { paused = true }
+        webView.onBackRequested = { openPause() }
+        webView.onPauseRequested = { openPause() }
         onDispose { webView.destroySafely() }
     }
-    BackHandler { paused = true }
+
+    LaunchedEffect(paused) {
+        if (paused) {
+            webView.pauseGame()
+            pauseFocus.requestFocus()
+        } else {
+            webView.resumeGame()
+        }
+    }
+
+    BackHandler {
+        if (paused) onExit() else openPause()
+    }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        AndroidView(factory = { webView }, modifier = Modifier.fillMaxSize())
+        AndroidView(factory = { webView }, modifier = Modifier.fillMaxSize().focusable())
 
         if (showControls && !paused) {
             Box(
@@ -307,30 +330,56 @@ private fun GameScreen(game: Game, onExit: () -> Unit) {
                     .padding(horizontal = 20.dp, vertical = 9.dp)
             ) {
                 val help = if (game.inputProfile.name == "CURSOR") {
-                    "D-PAD move o cursor • OK seleciona • BACK pausa"
+                    "D-PAD move • OK seleciona • BACK = MENU • PLAY/PAUSE = PAUSAR"
                 } else {
-                    "D-PAD joga • OK ação • BACK pausa"
+                    "D-PAD joga • OK ação • BACK = MENU • PLAY/PAUSE = PAUSAR"
                 }
                 NiaText(help, 13, FontWeight.Bold, Snow)
             }
         }
 
         if (paused) {
-            Box(Modifier.fillMaxSize().background(Color(0xE6090B10)), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier.fillMaxSize()
+                    .background(Color(0xEE090B10))
+                    .onPreviewKeyEvent { event ->
+                        val native = event.nativeKeyEvent
+                        if (native.action == KeyEvent.ACTION_UP &&
+                            (native.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE ||
+                             native.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY ||
+                             native.keyCode == KeyEvent.KEYCODE_MEDIA_PAUSE ||
+                             native.keyCode == KeyEvent.KEYCODE_MENU ||
+                             native.keyCode == KeyEvent.KEYCODE_BUTTON_START)
+                        ) {
+                            resume()
+                            true
+                        } else {
+                            false
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    NiaText("MENU NIA", 15, FontWeight.Bold, Cyan)
+                    Spacer(Modifier.height(6.dp))
                     NiaText("PAUSADO", 36, FontWeight.Black, Snow)
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(8.dp))
+                    NiaText("BACK novamente volta para a biblioteca de jogos.", 14, FontWeight.Medium, Mist)
+                    Spacer(Modifier.height(24.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        NiaButton("▶ CONTINUAR", { paused = false; webView.requestFocus() })
-                        NiaButton("↻ REINICIAR", { paused = false; webView.restart() })
-                        NiaButton("⌂ NIA ARCADE", onExit)
+                        NiaButton("▶ CONTINUAR", { resume() }, modifier = Modifier.focusRequester(pauseFocus))
+                        NiaButton("↻ REINICIAR", {
+                            webView.restart()
+                            paused = false
+                            webView.resumeGame()
+                        })
+                        NiaButton("⌂ JOGOS", onExit)
                     }
                 }
             }
         }
     }
 }
-
 @Composable
 private fun SettingsScreen(onBack: () -> Unit, onDiagnostics: () -> Unit, onLicenses: () -> Unit) {
     val context = LocalContext.current
@@ -447,11 +496,16 @@ private fun LicensesScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun NiaButton(text: String, onClick: () -> Unit, compact: Boolean = false) {
+private fun NiaButton(
+    text: String,
+    onClick: () -> Unit,
+    compact: Boolean = false,
+    modifier: Modifier = Modifier
+) {
     var focused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(if (focused) 1.06f else 1f, label = "button")
     Box(
-        Modifier
+        modifier
             .scale(scale)
             .onFocusChanged { focused = it.isFocused }
             .border(if (focused) 3.dp else 1.dp, if (focused) Cyan else Color(0x334A5261), RoundedCornerShape(14.dp))
