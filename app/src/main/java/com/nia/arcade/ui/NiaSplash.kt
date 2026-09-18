@@ -151,7 +151,7 @@ fun NiaSplash(onFinished: () -> Unit) {
             Spacer(Modifier.height(16.dp))
 
             BasicText(
-                text = "100 GAMES  •  ONE REMOTE",
+                text = "100 JOGOS  •  UM CONTROLE",
                 modifier = Modifier.graphicsLayer { this.alpha = subtitleAlpha * 0.86f },
                 style = TextStyle(
                     color = SplashCyan,
