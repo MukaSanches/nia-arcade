@@ -243,7 +243,12 @@ __NIA_LAYOUT_CSS__
 
   function isPrimaryAction(el) {
     var label = elementLabel(el);
-    return /^(play|start|start game|new game|jogar|iniciar|começar|comecar|begin|go)(\b|$)/i.test(label);
+    if (!label) return false;
+    var words = ["play", "start", "start game", "new game", "jogar", "iniciar", "começar", "comecar", "begin", "go"];
+    for (var i = 0; i < words.length; i++) {
+      if (label === words[i] || label.indexOf(words[i] + " ") === 0 || label.indexOf(words[i] + ":") === 0) return true;
+    }
+    return false;
   }
 
   function primaryAction() {

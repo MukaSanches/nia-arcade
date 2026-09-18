@@ -37,8 +37,8 @@ class GameWebView(context: Context) : WebView(context) {
         settings.allowContentAccess = false
         settings.blockNetworkLoads = true
         settings.mediaPlaybackRequiresUserGesture = false
-        settings.useWideViewPort = true
-        settings.loadWithOverviewMode = true
+        settings.useWideViewPort = false
+        settings.loadWithOverviewMode = false
         settings.setSupportZoom(false)
         settings.builtInZoomControls = false
         settings.displayZoomControls = false

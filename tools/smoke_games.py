@@ -21,7 +21,7 @@ def find_chrome():
 
 def check_one(chrome: str, game: dict) -> tuple[str, bool, str]:
     target = (ASSETS / "games" / game["slug"] / "index.html").resolve().as_uri()
-    with tempfile.TemporaryDirectory(prefix="nia-chrome-") as profile:
+    with tempfile.TemporaryDirectory(prefix="nia-chrome-", ignore_cleanup_errors=True) as profile:
         cmd = [
             chrome,
             "--headless=new",
