@@ -156,11 +156,8 @@ CPU_PATCH_GAMES = {
 }
 
 DIFFICULTY_GAMES = {
-    "01-snake","03-breakout","05-space-invaders","07-frogger","08-asteroids",
-    "09-flappy-bird","10-dino-runner","41-tank-battle","43-bubble-shooter",
-    "44-car-racing","45-fruit-ninja","46-tower-defense","47-archery","48-pinball",
-    "49-air-hockey","51-brick-breaker","54-shooting-gallery","55-space-defender",
-    "56-zombie-shooter","58-cannon-ball","59-gravity-ball","60-bouncing-ball","81-platformer",
+    "09-flappy-bird","10-dino-runner","44-car-racing",
+    "55-space-defender","56-zombie-shooter","59-gravity-ball",
 }
 
 def strip_remote_fonts(text: str) -> str:
@@ -421,11 +418,15 @@ def apply_gameplay_patch(slug: str, text: str) -> str:
             "let bird, pipes, score, highScore = 0, running = false, animId, bgOff = 0, spawnTimer = null;"
         )
         old = "function init() { bird = { x: 80, y: H / 2, vy: 0, angle: 0, wing: 0 }; pipes = []; score = 0; setTimeout(function sp() { if (!running) return; const th = 60 + Math.random() * (H - PIPE_GAP - 120); pipes.push({ x: W + 10, th, by: th + PIPE_GAP, done: false }); setTimeout(sp, 1600); }, 1000); }"
-        new = "function init() { bird = { x: 80, y: H / 2, vy: 0, angle: 0, wing: 0 }; pipes = []; score = 0; if (spawnTimer) clearTimeout(spawnTimer); function sp() { if (!running) return; if (pipes.length < 2) { const th = 70 + Math.random() * (H - PIPE_GAP - 150); pipes.push({ x: W + 18, th, by: th + PIPE_GAP, done: false }); } spawnTimer = setTimeout(sp, 2250); } spawnTimer = setTimeout(sp, 1500); }"
+        new = "function init() { bird = { x: 80, y: H / 2, vy: 0, angle: 0, wing: 0 }; pipes = []; score = 0; if (spawnTimer) clearTimeout(spawnTimer); function sp() { if (!running) return; const mode = window.__niaDifficulty || 'NORMAL'; const gap = mode === 'RELAXADO' ? 194 : (mode === 'DIFICIL' ? 154 : PIPE_GAP); if (pipes.length < 2) { const th = 70 + Math.random() * (H - gap - 150); pipes.push({ x: W + 18, th, by: th + gap, done: false }); } const delay = mode === 'RELAXADO' ? 2650 : (mode === 'DIFICIL' ? 1850 : 2250); spawnTimer = setTimeout(sp, delay); } spawnTimer = setTimeout(sp, 1500); }"
         text = text.replace(old, new)
         text = text.replace(
             "function end() { cancelAnimationFrame(animId); running = false;",
             "function end() { cancelAnimationFrame(animId); if (spawnTimer) { clearTimeout(spawnTimer); spawnTimer = null; } running = false;"
+        )
+        text = text.replace(
+            "pipes.forEach(p => p.x -= PIPE_SPD);",
+            "const niaMode = window.__niaDifficulty || 'NORMAL'; const niaPipeSpeed = PIPE_SPD * (niaMode === 'RELAXADO' ? 0.82 : (niaMode === 'DIFICIL' ? 1.18 : 1)); pipes.forEach(p => p.x -= niaPipeSpeed);"
         )
         # Upstream calls draw before bird/pipes exist. Initialize once so the game renders before auto-start.
         text = text.replace("        draw();\n    </script>", "        init(); draw();\n    </script>")
@@ -440,9 +441,9 @@ def apply_gameplay_patch(slug: str, text: str) -> str:
             "obstacles = []; score = 0; spd = 3.6; frame = 0; dustParts = []; if (spawnTimer) clearTimeout(spawnTimer); clouds = [mkCloud(), { ...mkCloud(), x: 300 }, { ...mkCloud(), x: 500 }];"
         )
         old = "setTimeout(function sp() { if (!running) return; const tall = Math.random() < .3, cactus = Math.random() < .7; if (cactus) obstacles.push({ x: W + 20, y: GND, w: tall ? 18 : 14, h: tall ? 55 : 40, type: 'cactus' }); else obstacles.push({ x: W + 20, y: GND - 55 - Math.random() * 30, w: 48, h: 20, type: 'bird', wing: 0 }); setTimeout(sp, 700 + Math.random() * 900); }, 1000);"
-        new = "function sp() { if (!running) return; if (obstacles.length < 2) { const tall = Math.random() < .26; const allowBird = score > 220; const cactus = !allowBird || Math.random() < .82; if (cactus) obstacles.push({ x: W + 30, y: GND, w: tall ? 18 : 14, h: tall ? 52 : 38, type: 'cactus' }); else obstacles.push({ x: W + 30, y: GND - 62, w: 44, h: 18, type: 'bird', wing: 0 }); } spawnTimer = setTimeout(sp, 1450 + Math.random() * 900); } spawnTimer = setTimeout(sp, 1450);"
+        new = "function sp() { if (!running) return; const mode = window.__niaDifficulty || 'NORMAL'; const cap = mode === 'DIFICIL' ? 3 : 2; if (obstacles.length < cap) { const tall = Math.random() < .26; const allowBird = score > (mode === 'RELAXADO' ? 320 : 220); const cactus = !allowBird || Math.random() < .82; if (cactus) obstacles.push({ x: W + 30, y: GND, w: tall ? 18 : 14, h: tall ? 52 : 38, type: 'cactus' }); else obstacles.push({ x: W + 30, y: GND - 62, w: 44, h: 18, type: 'bird', wing: 0 }); } const base = mode === 'RELAXADO' ? 1850 : (mode === 'DIFICIL' ? 1120 : 1450); spawnTimer = setTimeout(sp, base + Math.random() * 900); } spawnTimer = setTimeout(sp, 1450);"
         text = text.replace(old, new)
-        text = text.replace("spd = 4 + score * 0.003;", "spd = Math.min(8.2, 3.6 + score * 0.0016);")
+        text = text.replace("spd = 4 + score * 0.003;", "const niaMode = window.__niaDifficulty || 'NORMAL'; const niaFactor = niaMode === 'RELAXADO' ? 0.82 : (niaMode === 'DIFICIL' ? 1.18 : 1); spd = Math.min(niaMode === 'DIFICIL' ? 9.0 : 8.2, (3.6 + score * 0.0016) * niaFactor);")
         text = text.replace(
             "function end() { cancelAnimationFrame(animId); running = false;",
             "function end() { cancelAnimationFrame(animId); if (spawnTimer) { clearTimeout(spawnTimer); spawnTimer = null; } running = false;"
@@ -455,13 +456,13 @@ def apply_gameplay_patch(slug: str, text: str) -> str:
         text = text.replace("speed = Math.min(12, speed + 0.5);", "speed = Math.min(8.5, speed + 0.35);")
         text = text.replace(
             "if (frame % Math.max(30, 80 - score / 100) === 0) spawnObstacle();",
-            "if (frame % Math.max(52, 105 - Math.floor(score / 180)) === 0 && obstacles.length < 4) spawnObstacle();"
+            "const niaRaceMode = window.__niaDifficulty || 'NORMAL'; const niaRaceGap = niaRaceMode === 'RELAXADO' ? 132 : (niaRaceMode === 'DIFICIL' ? 82 : 105); if (frame % Math.max(52, niaRaceGap - Math.floor(score / 180)) === 0 && obstacles.length < (niaRaceMode === 'DIFICIL' ? 5 : 4)) spawnObstacle();"
         )
 
     elif slug == "55-space-defender":
         text = text.replace(
             "if (frame % Math.max(20, 60 - wave * 3) === 0) spawnEnemy();",
-            "if (frame % Math.max(38, 78 - wave * 2) === 0 && enemies.length < 9) spawnEnemy();"
+            "const niaSpaceMode = window.__niaDifficulty || 'NORMAL'; const niaSpaceGap = niaSpaceMode === 'RELAXADO' ? 98 : (niaSpaceMode === 'DIFICIL' ? 62 : 78); if (frame % Math.max(38, niaSpaceGap - wave * 2) === 0 && enemies.length < (niaSpaceMode === 'DIFICIL' ? 12 : 9)) spawnEnemy();"
         )
         text = text.replace("if (frame % 300 === 0 && running) { wave++;", "if (frame % 420 === 0 && running) { wave++;")
 
@@ -475,7 +476,7 @@ def apply_gameplay_patch(slug: str, text: str) -> str:
     elif slug == "59-gravity-ball":
         text = text.replace(
             "for (let i = 0; i < 2 + level; i++) { obstacles.push({ x: 80 + Math.random() * (W - 160), y: 80 + Math.random() * (H - 160), r: 18 + Math.random() * 20 }); }",
-            "for (let i = 0; i < Math.min(5, 1 + Math.floor(level / 2)); i++) { let x, y, tries = 0; do { x = 90 + Math.random() * (W - 180); y = 90 + Math.random() * (H - 180); tries++; } while (tries < 24 && (Math.hypot(x - ball.x, y - ball.y) < 110 || Math.hypot(x - target.x, y - target.y) < 105 || obstacles.some(o => Math.hypot(x - o.x, y - o.y) < o.r + 55))); obstacles.push({ x, y, r: 16 + Math.random() * 14 }); }"
+            "for (let i = 0; i < Math.min((window.__niaDifficulty || 'NORMAL') === 'DIFICIL' ? 7 : ((window.__niaDifficulty || 'NORMAL') === 'RELAXADO' ? 3 : 5), 1 + Math.floor(level / 2)); i++) { let x, y, tries = 0; do { x = 90 + Math.random() * (W - 180); y = 90 + Math.random() * (H - 180); tries++; } while (tries < 24 && (Math.hypot(x - ball.x, y - ball.y) < 110 || Math.hypot(x - target.x, y - target.y) < 105 || obstacles.some(o => Math.hypot(x - o.x, y - o.y) < o.r + 55))); obstacles.push({ x, y, r: 16 + Math.random() * 14 }); }"
         )
 
     return text
