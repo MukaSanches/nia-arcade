@@ -40,6 +40,10 @@ def main() -> int:
             errors.append(game["slug"] + ": remote dependency detected")
         if "nia-tv-bridge" not in text:
             errors.append(game["slug"] + ": NIA input bridge missing")
+        if "__niaResetViewport" not in text:
+            errors.append(game["slug"] + ": viewport guard missing")
+        if "__niaActivatePrimary" not in text:
+            errors.append(game["slug"] + ": smart start bridge missing")
         if game.get("inputProfile") not in valid_profiles:
             errors.append(game["slug"] + ": invalid input profile")
         if game.get("directionScheme") not in valid_schemes:
