@@ -55,7 +55,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.nia.arcade.data.CatalogRepository
 import com.nia.arcade.data.UserStateRepository
 import com.nia.arcade.model.Game
-import com.nia.arcade.model.PlayMode
 import com.nia.arcade.runtime.GameWebView
 
 private val Void = Color(0xFF090B10)
@@ -69,6 +68,13 @@ private enum class Screen { HOME, DETAILS, GAME, SETTINGS, DIAGNOSTICS, LICENSES
 
 @Composable
 fun NiaApp() {
+    var showSplash by remember { mutableStateOf(true) }
+
+    if (showSplash) {
+        NiaSplash(onFinished = { showSplash = false })
+        return
+    }
+
     val context = LocalContext.current
     val catalog = remember { runCatching { CatalogRepository(context).load() }.getOrDefault(emptyList()) }
     val state = remember { UserStateRepository(context) }
@@ -269,10 +275,9 @@ private fun DetailsScreen(
         Spacer(Modifier.height(14.dp))
         NiaText(game.title, 42, FontWeight.Black, Snow)
         val controls = if (game.inputProfile.name == "CURSOR") "CURSOR NIA" else "D-PAD"
-        val opponent = if (game.playMode == PlayMode.VS_CPU) "  •  VOCÊ vs CPU" else ""
-        NiaText(game.category.uppercase() + "  •  " + controls + opponent, 14, FontWeight.Bold, Cyan)
+        NiaText(game.category.uppercase() + "  •  " + controls, 14, FontWeight.Bold, Cyan)
         Spacer(Modifier.height(18.dp))
-        NiaText("Abre direto em tela cheia e é dimensionado automaticamente para esta TV. BACK abre o Menu NIA.", 19, FontWeight.Normal, Mist)
+        NiaText("Jogue offline usando apenas o controle da TV. BACK abre o menu NIA.", 19, FontWeight.Normal, Mist)
         Spacer(Modifier.height(28.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             NiaButton("▶ JOGAR", onPlay)
