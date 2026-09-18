@@ -35,6 +35,14 @@ def main() -> int:
     for game in CATALOG:
         path = ASSETS / "games" / game["slug"] / "index.html"
         text = path.read_text(encoding="utf-8")
+        # O bridge contém o dicionário inglês→português como dados e não representa
+        # texto exibido ao usuário; remova-o antes da auditoria estática.
+        audit_text = re.sub(
+            r'<script id="nia-tv-bridge">.*?</script>',
+            '',
+            text,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
 
         if game.get("locale") != "pt-BR":
             errors.append(game["slug"] + ": locale incorreto")
@@ -44,7 +52,7 @@ def main() -> int:
         # O código pode ter identificadores em inglês; aqui bloqueamos somente frases típicas
         # de interface que indicam texto não localizado.
         for phrase in BANNED:
-            if phrase in text:
+            if phrase in audit_text:
                 errors.append(game["slug"] + ": texto de UI em inglês: " + phrase)
 
     if errors:
