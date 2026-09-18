@@ -138,6 +138,58 @@ COMMON_PT = {
     "False": "Falso",
 }
 
+RUNTIME_PT = {
+    **COMMON_PT,
+    "High Score": "Recorde",
+    "Your turn": "Sua vez",
+    "CPU turn": "Vez da CPU",
+    "Black wins": "Pretas vencem",
+    "White wins": "Brancas vencem",
+    "You win": "Você venceu",
+    "You lose": "Você perdeu",
+    "You won": "Você venceu",
+    "Wave": "Onda",
+    "Round": "Rodada",
+    "New round": "Nova rodada",
+    "Coins": "Moedas",
+    "Targets": "Alvos",
+    "Health": "Vida",
+    "Ammo": "Munição",
+    "Roll the dice": "Role os dados",
+    "Rolls remaining": "Jogadas restantes",
+    "No rolls left": "Sem jogadas restantes",
+    "Click dice to hold, roll again or score.": "Selecione os dados para manter, role novamente ou marque os pontos.",
+    "score one category": "marque uma categoria",
+    "Total": "Total",
+    "Scarecrow": "Espantalho",
+    "Tractor": "Trator",
+    "Sprinkler": "Irrigador",
+    "Greenhouse": "Estufa",
+    "crop/sec": "colheitas/s",
+    "per click": "por clique",
+    "Click to harvest!": "Pressione OK para colher!",
+    "Growing...": "Crescendo...",
+    "Too slow!": "Muito lento!",
+    "Wrong emoji!": "Emoji errado!",
+    "Roll": "Rolar",
+    "Hold": "Manter",
+    "Deal": "Distribuir",
+    "Bet": "Aposta",
+    "Cash": "Saldo",
+    "Cards": "Cartas",
+    "Deck": "Baralho",
+    "Hand": "Mão",
+    "Dealer": "Banca",
+    "Winner": "Vencedor",
+    "Pause": "Pausar",
+    "Continue": "Continuar",
+    "Settings": "Configurações",
+    "Instructions": "Instruções",
+    "Next": "Próximo",
+    "Finish": "Concluir",
+    "New": "Novo",
+}
+
 REMOTE_LINK_RE = re.compile(
     r"""(?:src|href)\s*=\s*["']https?://|url\(\s*["']?https?://""",
     re.IGNORECASE,
@@ -252,6 +304,46 @@ def localize_content(slug: str, text: str) -> str:
             { w:'planeta', h:'Corpo que orbita uma estrela' },
         ];"""
         text = replace_const_array(text, "WORDS", words)
+
+    elif slug == "34-typing-speed":
+        texts = """const TEXTS = [
+            "A prática constante transforma movimentos difíceis em hábitos simples e naturais ao longo do tempo.",
+            "Programar é descrever uma solução de maneira precisa para que o computador execute cada etapa corretamente.",
+            "Um bom projeto nasce de testes pequenos, correções objetivas e atenção aos detalhes que realmente afetam o usuário.",
+            "A ciência cresce quando fazemos perguntas claras, testamos ideias e aceitamos os resultados mesmo quando surpreendem.",
+            "O melhor momento para começar algo importante é quando existe disposição para aprender e continuar melhorando.",
+            "Velocidade sem precisão cria erros, enquanto precisão com prática acaba se transformando em velocidade.",
+            "Tecnologia bem feita desaparece na experiência porque tudo funciona exatamente quando o usuário espera.",
+        ];"""
+        text = replace_const_array(text, "TEXTS", texts)
+
+    elif slug == "67-yahtzee":
+        categories = """const CATEGORIES = [
+            { id:'ones', name:'Uns', calc:d=>d.filter(v=>v===1).reduce((a,b)=>a+b,0) },
+            { id:'twos', name:'Dois', calc:d=>d.filter(v=>v===2).reduce((a,b)=>a+b,0) },
+            { id:'threes', name:'Três', calc:d=>d.filter(v=>v===3).reduce((a,b)=>a+b,0) },
+            { id:'fours', name:'Quatros', calc:d=>d.filter(v=>v===4).reduce((a,b)=>a+b,0) },
+            { id:'fives', name:'Cincos', calc:d=>d.filter(v=>v===5).reduce((a,b)=>a+b,0) },
+            { id:'sixes', name:'Seis', calc:d=>d.filter(v=>v===6).reduce((a,b)=>a+b,0) },
+            { id:'3k', name:'Trinca', calc:d=>CATS[6].check(d)?d.reduce((a,b)=>a+b,0):0, check:d=>Object.values(counts(d)).some(c=>c>=3) },
+            { id:'4k', name:'Quadra', calc:d=>CATS[7].check(d)?d.reduce((a,b)=>a+b,0):0, check:d=>Object.values(counts(d)).some(c=>c>=4) },
+            { id:'fh', name:'Full House', calc:d=>{const c=Object.values(counts(d)).sort();return(c[0]===2&&c[1]===3)?25:0;}, check:d=>{const c=Object.values(counts(d)).sort();return c[0]===2&&c[1]===3;} },
+            { id:'ss', name:'Sequência curta', calc:d=>{const u=[...new Set(d)].sort();for(const s of [[1,2,3,4],[2,3,4,5],[3,4,5,6]])if(s.every(v=>u.includes(v)))return 30;return 0;} },
+            { id:'ls', name:'Sequência longa', calc:d=>{const u=[...new Set(d)].sort().join('');return(u==='12345'||u==='23456')?40:0;} },
+            { id:'yh', name:'Cinco iguais!', calc:d=>Object.values(counts(d)).some(c=>c===5)?50:0 },
+            { id:'ch', name:'Chance', calc:d=>d.reduce((a,b)=>a+b,0) },
+        ];"""
+        text = replace_const_array(text, "CATEGORIES", categories)
+
+    elif slug == "83-idle-farm":
+        upgrades = """const UPGRADES = [
+            { id:'scarecrow', name:'Espantalho', icon:'🧱', desc:'+1 colheita por clique', cost:10, clickBonus:1, owned:0, baseCost:10 },
+            { id:'tractor', name:'Trator', icon:'🚜', desc:'+2 colheitas por segundo', cost:50, cps:2, owned:0, baseCost:50 },
+            { id:'sprinkler', name:'Irrigador', icon:'💧', desc:'+5 colheitas por segundo', cost:200, cps:5, owned:0, baseCost:200 },
+            { id:'greenhouse', name:'Estufa', icon:'🏡', desc:'+15 colheitas por segundo', cost:1000, cps:15, owned:0, baseCost:1000 },
+            { id:'drone', name:'Drone', icon:'🚁', desc:'+50 colheitas por segundo', cost:5000, cps:50, owned:0, baseCost:5000 },
+        ];"""
+        text = replace_const_array(text, "UPGRADES", upgrades)
 
     elif slug == "85-trivia-quiz":
         qs = """const QUESTIONS = [
@@ -684,7 +776,7 @@ def inject_bridge(text: str, input_profile: str, slug: str, layout: dict) -> str
         BRIDGE
         .replace("__NIA_PROFILE__", input_profile)
         .replace("__NIA_CURSOR_STEP__", str(layout["cursorStep"] or 48))
-        .replace("__NIA_TRANSLATIONS__", json.dumps(COMMON_PT, ensure_ascii=False))
+        .replace("__NIA_TRANSLATIONS__", json.dumps(RUNTIME_PT, ensure_ascii=False))
         .replace("__NIA_LAYOUT_CSS__", layout_css(layout))
     )
     patch = cpu_patch(slug)
