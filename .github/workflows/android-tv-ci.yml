@@ -3,6 +3,8 @@ name: Android TV CI
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -28,15 +30,18 @@ jobs:
         with:
           gradle-version: "8.13"
 
-      - name: Set up Android SDK 36
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: "platform-tools platforms;android-36 build-tools;36.0.0"
+
+      - name: Install Android SDK 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Fetch pinned upstream games
         run: |
           rm -rf vendor/100htmlgameshub
-          git clone https://github.com/shendds/100htmlgameshub.git vendor/100htmlgameshub
+          git clone --filter=blob:none https://github.com/shendds/100htmlgameshub.git vendor/100htmlgameshub
           git -C vendor/100htmlgameshub checkout cdf426cc619f3c713af1d73d485112444bace7c3
 
       - name: Import and adapt 100 TV games
