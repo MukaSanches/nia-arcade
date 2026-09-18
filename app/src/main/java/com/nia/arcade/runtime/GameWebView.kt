@@ -27,6 +27,10 @@ class GameWebView(context: Context) : WebView(context) {
         setBackgroundColor(Color.BLACK)
         isFocusable = true
         isFocusableInTouchMode = true
+        isVerticalScrollBarEnabled = false
+        isHorizontalScrollBarEnabled = false
+        overScrollMode = OVER_SCROLL_NEVER
+        setOnLongClickListener { true }
 
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
@@ -47,6 +51,20 @@ class GameWebView(context: Context) : WebView(context) {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val uri = request?.url ?: return true
                 return !isLocal(uri)
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                view?.postDelayed({
+                    evaluateJavascript(
+                        "(function(){" +
+                            "if(window.__niaFitGame)window.__niaFitGame();" +
+                            "if(window.__niaActivatePrimary)window.__niaActivatePrimary();" +
+                        "})();",
+                        null
+                    )
+                    requestFocus()
+                }, 180)
             }
         }
     }
@@ -73,7 +91,13 @@ class GameWebView(context: Context) : WebView(context) {
     fun resumeGame() {
         resumeTimers()
         onResume()
-        evaluateJavascript("window.__niaResetViewport&&window.__niaResetViewport();", null)
+        evaluateJavascript(
+            "(function(){" +
+                "if(window.__niaResetViewport)window.__niaResetViewport();" +
+                "if(window.__niaFitGame)window.__niaFitGame();" +
+            "})();",
+            null
+        )
         requestFocus()
     }
 
