@@ -241,7 +241,7 @@ private fun HomeScreen(
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     NiaText("NIA ARCADE", 32, FontWeight.Black, Snow)
-                    NiaText("CONSOLE EDITION • " + games.size + " JOGOS • UM CONTROLE", 13, FontWeight.Bold, Cyan)
+                    NiaText("EDIÇÃO CONSOLE • " + games.size + " JOGOS • UM CONTROLE", 13, FontWeight.Bold, Cyan)
                 }
                 NiaButton("👤 " + profile, onProfileToggle, compact = true)
                 Spacer(Modifier.size(8.dp))
@@ -262,7 +262,7 @@ private fun HomeScreen(
 
                 val resume = recents.firstOrNull()?.let { id -> games.firstOrNull { it.id == id } }
                 NiaButton(
-                    if (resume != null) "↻ CONTINUAR" else "↻ SEM PARTIDA RECENTE",
+                    if (resume != null) "↻ ÚLTIMO JOGO" else "↻ SEM PARTIDA RECENTE",
                     onClick = { resume?.let(onQuickPlay) }
                 )
             }
@@ -340,7 +340,7 @@ private fun HeroPanel(game: Game) {
                 NiaText(game.title, 28, FontWeight.Black, Snow)
                 val opponent = if (game.playMode == PlayMode.VS_CPU) " • VOCÊ vs CPU" else ""
                 NiaText(game.categoryPt.uppercase() + " • " + game.controlsPt + opponent, 13, FontWeight.Bold, Cyan)
-                NiaText("NIA CERTIFIED • OFFLINE • PT-BR", 11, FontWeight.Bold, Success)
+                NiaText("CERTIFICADO NIA • OFFLINE • PT-BR", 11, FontWeight.Bold, Success)
             }
         }
     }
@@ -417,7 +417,7 @@ private fun DetailsScreen(
                 NiaText(game.title, 42, FontWeight.Black, Snow)
                 val mode = if (game.playMode == PlayMode.VS_CPU) "VOCÊ vs CPU" else "1 JOGADOR"
                 NiaText(game.categoryPt.uppercase() + " • " + mode + " • PT-BR", 15, FontWeight.Bold, Cyan)
-                NiaText("NIA Certified • offline • perfil individual de TV", 13, FontWeight.Bold, Success)
+                NiaText("Certificado NIA • offline • perfil individual de TV", 13, FontWeight.Bold, Success)
             }
         }
 
@@ -687,7 +687,7 @@ private fun SettingsScreen(
 
     Column(Modifier.fillMaxSize().padding(50.dp)) {
         NiaText("SISTEMA NIA", 36, FontWeight.Black, Snow)
-        NiaText("Console Edition • perfil local: " + profile, 14, FontWeight.Bold, Cyan)
+        NiaText("Edição Console • perfil local: " + profile, 14, FontWeight.Bold, Cyan)
         Spacer(Modifier.height(20.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -792,7 +792,7 @@ private fun DiagnosticsScreen(onBack: () -> Unit) {
         )
         NiaText(
             "RAM total: " + Formatter.formatFileSize(context, memory.totalMem) +
-                " • Low RAM: " + activity.isLowRamDevice,
+                " • Pouca RAM: " + activity.isLowRamDevice,
             12,
             FontWeight.Medium,
             Mist
@@ -836,11 +836,11 @@ private fun DiagnosticsScreen(onBack: () -> Unit) {
 private fun LicensesScreen(onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(52.dp)) {
         NiaText("SOBRE E LICENÇAS", 34, FontWeight.Black, Snow)
-        NiaText("NIA Arcade 1.2.0 • Console Edition", 15, FontWeight.Bold, Cyan)
+        NiaText("NIA Arcade 1.2.0 • Edição Console", 15, FontWeight.Bold, Cyan)
         Spacer(Modifier.height(18.dp))
         NiaText("100 jogos certificados • offline • interface e adaptação pt-BR • feitos para controle de TV.", 17, FontWeight.Medium, Snow)
         Spacer(Modifier.height(12.dp))
-        NiaText("Coleção-base: 100 HTML Games Collection — MIT License — Copyright (c) 2026 Can.", 14, FontWeight.Medium, Mist)
+        NiaText("Coleção-base: 100 HTML Games Collection — Licença MIT — Copyright (c) 2026 Can.", 14, FontWeight.Medium, Mist)
         NiaText("O APK inclui o texto integral da licença e preserva a atribuição do projeto original.", 13, FontWeight.Medium, Mist)
         Spacer(Modifier.height(24.dp))
         NiaButton("← VOLTAR", onBack)
