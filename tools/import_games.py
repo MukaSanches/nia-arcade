@@ -674,14 +674,16 @@ def layout_profile(slug: str, text: str, input_profile: str) -> dict:
 
 def layout_css(profile: dict) -> str:
     if profile["type"] == "CANVAS":
-        return """
+        max_w = profile["maxWidthVw"]
+        max_h = profile["maxHeightVh"]
+        return f"""
 <style id="nia-layout-profile">
-html,body{margin:0!important;width:100%!important;height:100%!important;overflow:hidden!important;background:#05070b!important}
-body{min-height:100vh!important;justify-content:center!important;align-items:center!important}
-canvas{width:auto!important;height:auto!important;max-width:%svw!important;max-height:%svh!important;object-fit:contain!important}
-.back{display:none!important}
+html,body{{margin:0!important;width:100%!important;height:100%!important;overflow:hidden!important;background:#05070b!important}}
+body{{min-height:100vh!important;justify-content:center!important;align-items:center!important}}
+canvas{{width:auto!important;height:auto!important;max-width:{max_w}vw!important;max-height:{max_h}vh!important;object-fit:contain!important}}
+.back{{display:none!important}}
 </style>
-""" % (profile["maxWidthVw"], profile["maxHeightVh"])
+"""
     return """
 <style id="nia-layout-profile">
 html,body{margin:0!important;width:100%!important;min-height:100%!important;max-width:100vw!important;overflow:hidden!important}
