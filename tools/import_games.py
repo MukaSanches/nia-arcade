@@ -433,12 +433,6 @@ BRIDGE = r"""
     }, 260);
   });
 
-  if (window.ResizeObserver) {
-    try {
-      new ResizeObserver(function () { requestFit(); }).observe(document.body);
-    } catch (_) {}
-  }
-
   try {
     new MutationObserver(function () { requestFit(); }).observe(document.body, {
       childList:true,
