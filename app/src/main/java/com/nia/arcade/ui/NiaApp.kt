@@ -68,6 +68,13 @@ private enum class Screen { HOME, DETAILS, GAME, SETTINGS, DIAGNOSTICS, LICENSES
 
 @Composable
 fun NiaApp() {
+    var showSplash by remember { mutableStateOf(true) }
+
+    if (showSplash) {
+        NiaSplash(onFinished = { showSplash = false })
+        return
+    }
+
     val context = LocalContext.current
     val catalog = remember { runCatching { CatalogRepository(context).load() }.getOrDefault(emptyList()) }
     val state = remember { UserStateRepository(context) }
