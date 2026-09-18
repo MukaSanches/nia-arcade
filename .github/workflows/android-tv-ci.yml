@@ -47,6 +47,9 @@ jobs:
       - name: Validate game catalog
         run: python3 tools/validate_games.py
 
+      - name: Audit pt-BR localization
+        run: python3 tools/audit_ptbr.py
+
       - name: Web boot smoke test
         run: python3 tools/smoke_games.py
 
@@ -61,16 +64,16 @@ jobs:
 
       - name: Package Genesis artifact
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk NIA-Arcade-v1.1.2.apk
-          sha256sum NIA-Arcade-v1.1.2.apk | tee NIA-Arcade-v1.1.2.sha256
-          ls -lh NIA-Arcade-v1.1.2.apk
+          cp app/build/outputs/apk/debug/app-debug.apk NIA-Arcade-v1.2.0.apk
+          sha256sum NIA-Arcade-v1.2.0.apk | tee NIA-Arcade-v1.2.0.sha256
+          ls -lh NIA-Arcade-v1.2.0.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: NIA-Arcade-v1.1.2-Genesis
+          name: NIA-Arcade-v1.2.0-Genesis
           path: |
-            NIA-Arcade-v1.1.2.apk
-            NIA-Arcade-v1.1.2.sha256
+            NIA-Arcade-v1.2.0.apk
+            NIA-Arcade-v1.2.0.sha256
           if-no-files-found: error
           retention-days: 30
