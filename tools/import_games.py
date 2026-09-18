@@ -44,7 +44,137 @@ GAME_ROW_RE = re.compile(
     r"""\{\s*id:\s*(\d+),\s*name:\s*"([^"]+)",\s*icon:\s*"([^"]+)",\s*cat:\s*"([^"]+)"[^}]*ready:\s*true\s*\}"""
 )
 
+CANVAS_RE = re.compile(
+    r"""<canvas\b[^>]*\bwidth=["']?(\d+)["']?[^>]*\bheight=["']?(\d+)["']?[^>]*>""",
+    re.IGNORECASE,
+)
+
+def apply_gameplay_patch(slug: str, text: str) -> str:
+    if slug == "09-flappy-bird":
+        text = text.replace(
+            "const W = 340, H = 500, GRAVITY = 0.45, FLAP = -8, PIPE_W = 52, PIPE_GAP = 140, PIPE_SPD = 2.5;",
+            "const W = 340, H = 500, GRAVITY = 0.42, FLAP = -7.6, PIPE_W = 50, PIPE_GAP = 172, PIPE_SPD = 2.15;"
+        )
+        text = text.replace(
+            "let bird, pipes, score, highScore = 0, running = false, animId, bgOff = 0;",
+            "let bird, pipes, score, highScore = 0, running = false, animId, bgOff = 0, spawnTimer = null;"
+        )
+        old = "function init() { bird = { x: 80, y: H / 2, vy: 0, angle: 0, wing: 0 }; pipes = []; score = 0; setTimeout(function sp() { if (!running) return; const th = 60 + Math.random() * (H - PIPE_GAP - 120); pipes.push({ x: W + 10, th, by: th + PIPE_GAP, done: false }); setTimeout(sp, 1600); }, 1000); }"
+        new = "function init() { bird = { x: 80, y: H / 2, vy: 0, angle: 0, wing: 0 }; pipes = []; score = 0; if (spawnTimer) clearTimeout(spawnTimer); function sp() { if (!running) return; if (pipes.length < 2) { const th = 70 + Math.random() * (H - PIPE_GAP - 150); pipes.push({ x: W + 18, th, by: th + PIPE_GAP, done: false }); } spawnTimer = setTimeout(sp, 2250); } spawnTimer = setTimeout(sp, 1500); }"
+        text = text.replace(old, new)
+        text = text.replace(
+            "function end() { cancelAnimationFrame(animId); running = false;",
+            "function end() { cancelAnimationFrame(animId); if (spawnTimer) { clearTimeout(spawnTimer); spawnTimer = null; } running = false;"
+        )
+
+    elif slug == "10-dino-runner":
+        text = text.replace(
+            "let dino, obstacles, score, highScore = 0, running = false, animId, spd, frame, dustParts = [], clouds = [], bgX = 0;",
+            "let dino, obstacles, score, highScore = 0, running = false, animId, spd, frame, dustParts = [], clouds = [], bgX = 0, spawnTimer = null;"
+        )
+        text = text.replace(
+            "obstacles = []; score = 0; spd = 4; frame = 0; dustParts = []; clouds = [mkCloud(), { ...mkCloud(), x: 300 }, { ...mkCloud(), x: 500 }];",
+            "obstacles = []; score = 0; spd = 3.6; frame = 0; dustParts = []; if (spawnTimer) clearTimeout(spawnTimer); clouds = [mkCloud(), { ...mkCloud(), x: 300 }, { ...mkCloud(), x: 500 }];"
+        )
+        old = "setTimeout(function sp() { if (!running) return; const tall = Math.random() < .3, cactus = Math.random() < .7; if (cactus) obstacles.push({ x: W + 20, y: GND, w: tall ? 18 : 14, h: tall ? 55 : 40, type: 'cactus' }); else obstacles.push({ x: W + 20, y: GND - 55 - Math.random() * 30, w: 48, h: 20, type: 'bird', wing: 0 }); setTimeout(sp, 700 + Math.random() * 900); }, 1000);"
+        new = "function sp() { if (!running) return; if (obstacles.length < 2) { const tall = Math.random() < .26; const allowBird = score > 220; const cactus = !allowBird || Math.random() < .82; if (cactus) obstacles.push({ x: W + 30, y: GND, w: tall ? 18 : 14, h: tall ? 52 : 38, type: 'cactus' }); else obstacles.push({ x: W + 30, y: GND - 62, w: 44, h: 18, type: 'bird', wing: 0 }); } spawnTimer = setTimeout(sp, 1450 + Math.random() * 900); } spawnTimer = setTimeout(sp, 1450);"
+        text = text.replace(old, new)
+        text = text.replace(
+            "spd = 4 + score * 0.003;",
+            "spd = Math.min(8.2, 3.6 + score * 0.0016);"
+        )
+        text = text.replace(
+            "function end() { cancelAnimationFrame(animId); running = false;",
+            "function end() { cancelAnimationFrame(animId); if (spawnTimer) { clearTimeout(spawnTimer); spawnTimer = null; } running = false;"
+        )
+
+    elif slug == "44-car-racing":
+        text = text.replace(
+            "speed = 3; frame = 0; running = true;",
+            "speed = 2.8; frame = 0; running = true;"
+        )
+        text = text.replace(
+            "speed = Math.min(12, speed + 0.5);",
+            "speed = Math.min(8.5, speed + 0.35);"
+        )
+        text = text.replace(
+            "if (frame % Math.max(30, 80 - score / 100) === 0) spawnObstacle();",
+            "if (frame % Math.max(52, 105 - Math.floor(score / 180)) === 0 && obstacles.length < 4) spawnObstacle();"
+        )
+
+    elif slug == "55-space-defender":
+        text = text.replace(
+            "if (frame % Math.max(20, 60 - wave * 3) === 0) spawnEnemy();",
+            "if (frame % Math.max(38, 78 - wave * 2) === 0 && enemies.length < 9) spawnEnemy();"
+        )
+        text = text.replace(
+            "if (frame % 300 === 0 && running) { wave++;",
+            "if (frame % 420 === 0 && running) { wave++;"
+        )
+
+    elif slug == "56-zombie-shooter":
+        text = text.replace(
+            "for (let i = 0; i < 4 + wave * 3; i++)",
+            "for (let i = 0; i < Math.min(12, 3 + wave * 2); i++)"
+        )
+        text = text.replace(
+            "speed: 0.5 + Math.random() * 0.5 + wave * 0.1",
+            "speed: 0.42 + Math.random() * 0.38 + Math.min(0.55, wave * 0.055)"
+        )
+
+    elif slug == "59-gravity-ball":
+        text = text.replace(
+            "for (let i = 0; i < 2 + level; i++) { obstacles.push({ x: 80 + Math.random() * (W - 160), y: 80 + Math.random() * (H - 160), r: 18 + Math.random() * 20 }); }",
+            "for (let i = 0; i < Math.min(5, 1 + Math.floor(level / 2)); i++) { let x, y, tries = 0; do { x = 90 + Math.random() * (W - 180); y = 90 + Math.random() * (H - 180); tries++; } while (tries < 24 && (Math.hypot(x - ball.x, y - ball.y) < 110 || Math.hypot(x - target.x, y - target.y) < 105 || obstacles.some(o => Math.hypot(x - o.x, y - o.y) < o.r + 55))); obstacles.push({ x, y, r: 16 + Math.random() * 14 }); }"
+        )
+
+    return text
+
+def layout_css(slug: str, text: str, profile: str) -> str:
+    canvas = CANVAS_RE.search(text)
+    if not canvas:
+        return """
+<style id="nia-layout-profile">
+html, body { margin:0 !important; max-width:100vw !important; overflow:hidden !important; }
+body { min-height:100vh !important; }
+</style>
+"""
+
+    width = int(canvas.group(1))
+    height = int(canvas.group(2))
+    ratio = width / max(1, height)
+
+    if profile == "KEYBOARD":
+        if ratio < 0.82:
+            max_w, max_h = 58, 86
+        elif ratio > 1.55:
+            max_w, max_h = 92, 72
+        else:
+            max_w, max_h = 84, 80
+
+        if slug == "09-flappy-bird":
+            max_w, max_h = 56, 88
+        elif slug == "10-dino-runner":
+            max_w, max_h = 94, 66
+
+        return f"""
+<style id="nia-layout-profile">
+html, body {{ margin:0 !important; width:100% !important; height:100% !important; overflow:hidden !important; }}
+body {{ min-height:100vh !important; justify-content:center !important; }}
+canvas {{ width:auto !important; height:auto !important; max-width:{max_w}vw !important; max-height:{max_h}vh !important; object-fit:contain !important; }}
+.back {{ display:none !important; }}
+</style>
+"""
+
+    return """
+<style id="nia-layout-profile">
+html, body { margin:0 !important; width:100% !important; min-height:100% !important; overflow:hidden !important; }
+.back { display:none !important; }
+</style>
+"""
+
 BRIDGE = r"""
+__NIA_LAYOUT_CSS__
 <style id="nia-tv-bridge-style">
   .back, a[href="../../index.html"], a[href*="../index.html"] { display:none !important; }
   html, body { overscroll-behavior: none !important; }
@@ -192,6 +322,10 @@ BRIDGE = r"""
       }
     }
     setTimeout(resetViewport, 50);
+    setTimeout(function () {
+      window.__niaActivatePrimary();
+      resetViewport();
+    }, 140);
   });
 
   document.addEventListener("click", function (event) {
@@ -267,8 +401,12 @@ def classify_input(text: str) -> tuple[str, str, str]:
     action = "Space" if space else ("Enter" if enter else "Enter")
     return profile, scheme, action
 
-def inject_bridge(text: str, profile: str) -> str:
-    bridge = BRIDGE.replace("__NIA_PROFILE__", profile)
+def inject_bridge(text: str, profile: str, slug: str) -> str:
+    bridge = (
+        BRIDGE
+        .replace("__NIA_PROFILE__", profile)
+        .replace("__NIA_LAYOUT_CSS__", layout_css(slug, text, profile))
+    )
     if re.search(r"</body\s*>", text, flags=re.IGNORECASE):
         return re.sub(r"</body\s*>", bridge + "\n</body>", text, count=1, flags=re.IGNORECASE)
     return text + "\n" + bridge
@@ -330,8 +468,9 @@ def main() -> int:
         if original_title != title:
             text = text.replace(original_title, title)
 
+        text = apply_gameplay_patch(slug, text)
         profile, scheme, action = classify_input(text)
-        text = inject_bridge(text, profile)
+        text = inject_bridge(text, profile, slug)
 
         remotes = REMOTE_LINK_RE.findall(text)
         if remotes:
