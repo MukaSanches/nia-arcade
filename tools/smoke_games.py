@@ -21,8 +21,9 @@ def find_chrome():
 
 def check_one(chrome: str, game: dict) -> tuple[str, bool, str]:
     target = (ASSETS / "games" / game["slug"] / "index.html").resolve().as_uri()
+    profile = tempfile.mkdtemp(prefix="nia-chrome-")
 
-    with tempfile.TemporaryDirectory(prefix="nia-chrome-") as profile:
+    try:
         cmd = [
             chrome,
             "--headless=new",
@@ -58,11 +59,17 @@ def check_one(chrome: str, game: dict) -> tuple[str, bool, str]:
 
         missing = [name for name, passed in checks.items() if not passed]
         msg = "missing=" + ",".join(missing)
+
         if proc.returncode != 0:
             msg += " rc=" + str(proc.returncode)
         if proc.stderr:
             msg += " stderr=" + proc.stderr[-400:]
+
         return game["slug"], False, msg
+    finally:
+        # Chrome may release profile files a few milliseconds after its parent exits.
+        # Cleanup must never turn a successful game boot into a false test failure.
+        shutil.rmtree(profile, ignore_errors=True)
 
 def main() -> int:
     chrome = find_chrome()
