@@ -47,6 +47,7 @@ GAME_ROW_RE = re.compile(
 BRIDGE = r"""
 <style id="nia-tv-bridge-style">
   .back, a[href="../../index.html"], a[href*="../index.html"] { display:none !important; }
+  html, body { overscroll-behavior: none !important; }
   #__nia_cursor {
     position:fixed; left:50%; top:50%; width:24px; height:24px;
     margin:-12px 0 0 -12px; border:3px solid #38E8FF; border-radius:50%;
@@ -63,6 +64,22 @@ BRIDGE = r"""
   var cursor = document.getElementById("__nia_cursor");
   var x = Math.max(20, window.innerWidth / 2);
   var y = Math.max(20, window.innerHeight / 2);
+  var gameStarted = false;
+  var primaryUsed = false;
+
+  function resetViewport() {
+    try {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.documentElement.scrollLeft = 0;
+      if (document.body) {
+        document.body.scrollTop = 0;
+        document.body.scrollLeft = 0;
+      }
+    } catch (_) {}
+  }
+
+  window.__niaResetViewport = resetViewport;
 
   function visible(el) {
     if (!el) return false;
@@ -83,6 +100,54 @@ BRIDGE = r"""
     return null;
   }
 
+  function elementLabel(el) {
+    if (!el) return "";
+    return String(
+      el.innerText ||
+      el.textContent ||
+      el.value ||
+      el.getAttribute("aria-label") ||
+      ""
+    ).trim().toLowerCase();
+  }
+
+  function isPrimaryAction(el) {
+    var label = elementLabel(el);
+    return /^(play|start|start game|new game|jogar|iniciar|começar|comecar|begin|go)(\b|$)/i.test(label);
+  }
+
+  function primaryAction() {
+    var list = document.querySelectorAll("button, [role=button], input[type=button], input[type=submit], .btn, a");
+    for (var i = 0; i < list.length; i++) {
+      if (visible(list[i]) && isPrimaryAction(list[i])) return list[i];
+    }
+    return null;
+  }
+
+  function afterGameStart() {
+    gameStarted = true;
+    resetViewport();
+    setTimeout(resetViewport, 16);
+    setTimeout(resetViewport, 80);
+    setTimeout(resetViewport, 220);
+  }
+
+  window.__niaActivatePrimary = function () {
+    if (primaryUsed) return false;
+    var primary = primaryAction();
+    if (!primary) return false;
+    primaryUsed = true;
+    try {
+      if (typeof primary.click === "function") primary.click();
+      else primary.dispatchEvent(new MouseEvent("click", {bubbles:true, button:0}));
+      afterGameStart();
+      return true;
+    } catch (_) {
+      primaryUsed = false;
+      return false;
+    }
+  };
+
   window.__niaCursorMove = function (dx, dy) {
     x = Math.min(Math.max(16, x + dx), Math.max(16, window.innerWidth - 16));
     y = Math.min(Math.max(16, y + dy), Math.max(16, window.innerHeight - 16));
@@ -93,14 +158,24 @@ BRIDGE = r"""
     var target = document.elementFromPoint(x, y);
     if (!target) return;
     try {
+      var startsGame = isPrimaryAction(target) || isPrimaryAction(target.closest && target.closest("button, [role=button], input, .btn, a"));
       target.dispatchEvent(new MouseEvent("mousedown", {bubbles:true, clientX:x, clientY:y, button:0}));
       target.dispatchEvent(new MouseEvent("mouseup", {bubbles:true, clientX:x, clientY:y, button:0}));
       if (typeof target.click === "function") target.click();
       else target.dispatchEvent(new MouseEvent("click", {bubbles:true, clientX:x, clientY:y, button:0}));
+      if (startsGame) {
+        primaryUsed = true;
+        afterGameStart();
+      }
     } catch (_) {}
   };
 
+  window.addEventListener("scroll", function () {
+    if (gameStarted) requestAnimationFrame(resetViewport);
+  }, {passive:true});
+
   window.addEventListener("load", function () {
+    resetViewport();
     if (profile === "CURSOR" && cursor) {
       cursor.style.display = "block";
       var first = firstActionable();
@@ -111,12 +186,22 @@ BRIDGE = r"""
       }
       update();
     } else {
-      var first = firstActionable();
+      var first = primaryAction() || firstActionable();
       if (first && typeof first.focus === "function") {
         try { first.focus({preventScroll:true}); } catch (_) { try { first.focus(); } catch (_) {} }
       }
     }
+    setTimeout(resetViewport, 50);
   });
+
+  document.addEventListener("click", function (event) {
+    var target = event.target;
+    var actionable = target && target.closest ? target.closest("button, [role=button], input, .btn, a") : target;
+    if (isPrimaryAction(actionable)) {
+      primaryUsed = true;
+      afterGameStart();
+    }
+  }, true);
 
   document.addEventListener("keydown", function (event) {
     if (profile !== "KEYBOARD") return;
@@ -125,7 +210,13 @@ BRIDGE = r"""
     if (active && active !== document.body && active !== document.documentElement) return;
     var first = firstActionable();
     if (first && typeof first.click === "function") {
-      try { first.click(); } catch (_) {}
+      try {
+        first.click();
+        if (isPrimaryAction(first)) {
+          primaryUsed = true;
+          afterGameStart();
+        }
+      } catch (_) {}
     }
   }, true);
 })();
