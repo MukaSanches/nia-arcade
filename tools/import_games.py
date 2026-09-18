@@ -105,6 +105,8 @@ COMMON_PT = {
     "Press SPACE or click to start": "Pressione OK para começar",
     "Click or press SPACE to start": "Pressione OK para começar",
     "Press SPACE or the button to start": "Pressione OK para começar",
+    "Press SPACE": "Pressione OK",
+    "SPACE": "OK",
     "Click or SPACE to flap": "Pressione OK para voar",
     "SPACE / ↑ to jump | ↓ to duck": "OK / ↑ para pular | ↓ para abaixar",
     "Arrow keys or WASD to move": "Use as setas do controle para mover",
