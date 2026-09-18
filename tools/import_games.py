@@ -176,6 +176,23 @@ def translate_common(text: str) -> str:
         text = text.replace(src, COMMON_PT[src])
     return text
 
+def replace_visible_title(text: str, original: str, title: str) -> str:
+    text = re.sub(
+        r"(<title>)(.*?)(</title>)",
+        lambda m: m.group(1) + m.group(2).replace(original, title) + m.group(3),
+        text,
+        count=1,
+        flags=re.I | re.S,
+    )
+    text = re.sub(
+        r"(<h1[^>]*>)(.*?)(</h1>)",
+        lambda m: m.group(1) + m.group(2).replace(original, title) + m.group(3),
+        text,
+        count=1,
+        flags=re.I | re.S,
+    )
+    return text
+
 def replace_const_array(text: str, const_name: str, replacement: str) -> str:
     pattern = r"const\s+" + re.escape(const_name) + r"\s*=\s*\[(?:.|\n|\r)*?\];"
     return re.sub(pattern, replacement, text, count=1, flags=re.S)
@@ -718,7 +735,7 @@ def main() -> int:
 
         text = source.read_text(encoding="utf-8")
         text = strip_remote_fonts(text)
-        text = text.replace(original, title)
+        text = replace_visible_title(text, original, title)
         text = localize_content(slug, text)
         text = apply_gameplay_patch(slug, text)
         text = translate_common(text)
