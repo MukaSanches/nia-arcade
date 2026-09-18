@@ -35,10 +35,11 @@ def main() -> int:
     for game in CATALOG:
         path = ASSETS / "games" / game["slug"] / "index.html"
         text = path.read_text(encoding="utf-8")
-        # O bridge contém o dicionário inglês→português como dados e não representa
-        # texto exibido ao usuário; remova-o antes da auditoria estática.
+        # Código JavaScript/CSS pode manter identificadores e strings internas em inglês.
+        # O que importa para pt-BR é a interface renderizada. A auditoria estática
+        # verifica apenas HTML visível; o smoke test verifica o DOM depois do bridge.
         audit_text = re.sub(
-            r'<script id="nia-tv-bridge">.*?</script>',
+            r'<script\\b[^>]*>.*?</script>|<style\\b[^>]*>.*?</style>',
             '',
             text,
             flags=re.IGNORECASE | re.DOTALL,
