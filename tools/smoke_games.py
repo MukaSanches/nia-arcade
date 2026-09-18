@@ -31,14 +31,13 @@ def check_one(chrome: str, game: dict) -> tuple[str, bool, str]:
             "--disable-dev-shm-usage",
             "--allow-file-access-from-files",
             "--window-size=1920,1080",
-            "--virtual-time-budget=1400",
             "--user-data-dir=" + profile,
             "--dump-dom",
             target,
         ]
 
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=16)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         except subprocess.TimeoutExpired:
             return game["slug"], False, "timeout"
 
@@ -72,7 +71,7 @@ def main() -> int:
 
     failures = []
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
         futures = [pool.submit(check_one, chrome, game) for game in CATALOG]
         for future in concurrent.futures.as_completed(futures):
             slug, ok, msg = future.result()
