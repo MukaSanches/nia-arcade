@@ -516,6 +516,32 @@ def localize_content(slug: str, text: str) -> str:
 
     return text
 
+def repair_initial_render(slug: str, text: str) -> str:
+    init_then_draw = {
+        "01-snake",
+        "03-breakout",
+        "05-space-invaders",
+        "06-pac-man",
+        "07-frogger",
+        "08-asteroids",
+    }
+    if slug in init_then_draw:
+        text = re.sub(
+            r"\n\s*draw\(\);\s*\n\s*</script>",
+            "\n        init(); draw();\n    </script>",
+            text,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+
+    if slug == "04-tetris":
+        text = text.replace(
+            "        drawBoard(); drawPreview();\n    </script>",
+            "        start();\n    </script>",
+        )
+
+    return text
+
 def apply_gameplay_patch(slug: str, text: str) -> str:
     if slug == "09-flappy-bird":
         text = text.replace(
@@ -849,6 +875,7 @@ def main() -> int:
         text = strip_remote_fonts(text)
         text = replace_visible_title(text, original, title)
         text = localize_content(slug, text)
+        text = repair_initial_render(slug, text)
         text = apply_gameplay_patch(slug, text)
         text = translate_common(text)
 
