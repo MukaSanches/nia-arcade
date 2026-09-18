@@ -229,7 +229,7 @@ def translate_common(text: str) -> str:
     # Conteúdo dinâmico é traduzido pelo bridge em runtime; aqui traduzimos
     # apenas HTML/CSS visível fora de <script> e <style>.
     parts = re.split(
-        r'(<script\\b[^>]*>.*?</script>|<style\\b[^>]*>.*?</style>)',
+        r'(<script\b[^>]*>.*?</script>|<style\b[^>]*>.*?</style>)',
         text,
         flags=re.IGNORECASE | re.DOTALL,
     )
