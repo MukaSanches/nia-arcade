@@ -27,6 +27,9 @@ class GameWebView(context: Context) : WebView(context) {
         setBackgroundColor(Color.BLACK)
         isFocusable = true
         isFocusableInTouchMode = true
+        isVerticalScrollBarEnabled = false
+        isHorizontalScrollBarEnabled = false
+        overScrollMode = OVER_SCROLL_NEVER
 
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
@@ -34,6 +37,9 @@ class GameWebView(context: Context) : WebView(context) {
         settings.allowContentAccess = false
         settings.blockNetworkLoads = true
         settings.mediaPlaybackRequiresUserGesture = false
+        settings.useWideViewPort = true
+        settings.loadWithOverviewMode = true
+        settings.setSupportZoom(false)
         settings.builtInZoomControls = false
         settings.displayZoomControls = false
 
