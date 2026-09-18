@@ -21,6 +21,7 @@ def find_chrome():
 
 def check_one(chrome: str, game: dict) -> tuple[str, bool, str]:
     target = (ASSETS / "games" / game["slug"] / "index.html").resolve().as_uri()
+
     with tempfile.TemporaryDirectory(prefix="nia-chrome-") as profile:
         cmd = [
             chrome,
@@ -29,17 +30,39 @@ def check_one(chrome: str, game: dict) -> tuple[str, bool, str]:
             "--disable-gpu",
             "--disable-dev-shm-usage",
             "--allow-file-access-from-files",
+            "--window-size=1920,1080",
+            "--virtual-time-budget=1400",
             "--user-data-dir=" + profile,
             "--dump-dom",
             target,
         ]
+
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=12)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=16)
         except subprocess.TimeoutExpired:
             return game["slug"], False, "timeout"
-        ok = proc.returncode == 0 and "<html" in proc.stdout.lower()
-        msg = "" if ok else (proc.stderr[-500:] or "no DOM")
-        return game["slug"], ok, msg
+
+        dom = proc.stdout
+        low = dom.lower()
+
+        checks = {
+            "html": "<html" in low,
+            "fit": 'data-nia-fit="ready"' in low,
+            "bridge": 'id="nia-tv-bridge"' in low,
+            "prelude": 'id="nia-input-prelude"' in low,
+        }
+
+        ok = proc.returncode == 0 and all(checks.values())
+        if ok:
+            return game["slug"], True, ""
+
+        missing = [name for name, passed in checks.items() if not passed]
+        msg = "missing=" + ",".join(missing)
+        if proc.returncode != 0:
+            msg += " rc=" + str(proc.returncode)
+        if proc.stderr:
+            msg += " stderr=" + proc.stderr[-400:]
+        return game["slug"], False, msg
 
 def main() -> int:
     chrome = find_chrome()
@@ -48,6 +71,7 @@ def main() -> int:
         return 2
 
     failures = []
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
         futures = [pool.submit(check_one, chrome, game) for game in CATALOG]
         for future in concurrent.futures.as_completed(futures):
@@ -57,11 +81,13 @@ def main() -> int:
 
     if failures:
         print("WEB BOOT FAILED:", len(failures))
-        for slug, msg in failures[:20]:
+        for slug, msg in failures[:30]:
             print(" -", slug, msg)
         return 1
 
-    print("WEB BOOT VERIFIED: 100/100 games produced a DOM in headless Chrome.")
+    print("WEB BOOT VERIFIED: 100/100")
+    print("Fullscreen AutoFit executed: 100/100")
+    print("Input prelude executed: 100/100")
     return 0
 
 if __name__ == "__main__":
