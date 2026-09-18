@@ -223,9 +223,24 @@ def strip_remote_fonts(text: str) -> str:
 
 def translate_common(text: str) -> str:
     text = text.replace('lang="en"', 'lang="pt-BR"').replace("lang='en'", "lang='pt-BR'")
-    for src in sorted(COMMON_PT, key=len, reverse=True):
-        text = text.replace(src, COMMON_PT[src])
-    return text
+
+    # Nunca traduza identificadores JavaScript. Palavras como "Math" fazem parte
+    # da linguagem e uma substituição global quebrava dezenas de jogos.
+    # Conteúdo dinâmico é traduzido pelo bridge em runtime; aqui traduzimos
+    # apenas HTML/CSS visível fora de <script> e <style>.
+    parts = re.split(
+        r'(<script\\b[^>]*>.*?</script>|<style\\b[^>]*>.*?</style>)',
+        text,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    for i, part in enumerate(parts):
+        lowered = part.lstrip().lower()
+        if lowered.startswith("<script") or lowered.startswith("<style"):
+            continue
+        for src in sorted(COMMON_PT, key=len, reverse=True):
+            part = part.replace(src, COMMON_PT[src])
+        parts[i] = part
+    return "".join(parts)
 
 def replace_visible_title(text: str, original: str, title: str) -> str:
     text = re.sub(
