@@ -20,6 +20,7 @@ class GameWebView(context: Context) : WebView(context) {
         .build()
 
     var onBackRequested: (() -> Unit)? = null
+    var onPauseRequested: (() -> Unit)? = null
     private var game: Game? = null
 
     init {
@@ -62,6 +63,20 @@ class GameWebView(context: Context) : WebView(context) {
         requestFocus()
     }
 
+    fun pauseGame() {
+        evaluateJavascript("window.__niaResetViewport&&window.__niaResetViewport();", null)
+        onPause()
+        pauseTimers()
+        clearFocus()
+    }
+
+    fun resumeGame() {
+        resumeTimers()
+        onResume()
+        evaluateJavascript("window.__niaResetViewport&&window.__niaResetViewport();", null)
+        requestFocus()
+    }
+
     fun destroySafely() {
         stopLoading()
         loadUrl("about:blank")
@@ -76,6 +91,16 @@ class GameWebView(context: Context) : WebView(context) {
             return true
         }
 
+        if (event.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE ||
+            event.keyCode == KeyEvent.KEYCODE_MEDIA_PAUSE ||
+            event.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY ||
+            event.keyCode == KeyEvent.KEYCODE_MENU ||
+            event.keyCode == KeyEvent.KEYCODE_BUTTON_START
+        ) {
+            if (event.action == KeyEvent.ACTION_UP) onPauseRequested?.invoke()
+            return true
+        }
+
         val current = game ?: return super.dispatchKeyEvent(event)
         val down = event.action == KeyEvent.ACTION_DOWN
 
@@ -86,7 +111,7 @@ class GameWebView(context: Context) : WebView(context) {
                 KeyEvent.KEYCODE_DPAD_DOWN -> cursorMove(0, 54)
                 KeyEvent.KEYCODE_DPAD_LEFT -> cursorMove(-54, 0)
                 KeyEvent.KEYCODE_DPAD_RIGHT -> cursorMove(54, 0)
-                KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> cursorClick()
+                KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> smartCursorClick()
                 else -> return super.dispatchKeyEvent(event)
             }
             return true
@@ -140,6 +165,7 @@ class GameWebView(context: Context) : WebView(context) {
         val quotedCode = code.jsQuote()
         val script =
             "(function(){" +
+            "if('" + type + "'==='keydown'&&(" + quotedKey + "==='Enter'||" + quotedKey + "===' ')&&window.__niaActivatePrimary&&window.__niaActivatePrimary()){return;}" +
             "const e1=new KeyboardEvent('" + type + "',{key:" + quotedKey + ",code:" + quotedCode + ",bubbles:true,cancelable:true});" +
             "document.dispatchEvent(e1);" +
             "const e2=new KeyboardEvent('" + type + "',{key:" + quotedKey + ",code:" + quotedCode + ",bubbles:true,cancelable:true});" +
@@ -147,6 +173,8 @@ class GameWebView(context: Context) : WebView(context) {
             "if('" + type + "'==='keydown'&&(" + quotedKey + "==='Enter'||" + quotedKey + "===' ')){" +
             "const a=document.activeElement;" +
             "if(a&&(a.tagName==='BUTTON'||a.tagName==='A'||a.getAttribute('role')==='button')){try{a.click();}catch(_){}}" +
+            "setTimeout(function(){window.__niaResetViewport&&window.__niaResetViewport();},0);" +
+            "setTimeout(function(){window.__niaResetViewport&&window.__niaResetViewport();},120);" +
             "}" +
             "})();"
         evaluateJavascript(script, null)
@@ -156,8 +184,14 @@ class GameWebView(context: Context) : WebView(context) {
         evaluateJavascript("window.__niaCursorMove&&window.__niaCursorMove(" + dx + "," + dy + ");", null)
     }
 
-    private fun cursorClick() {
-        evaluateJavascript("window.__niaCursorClick&&window.__niaCursorClick();", null)
+    private fun smartCursorClick() {
+        evaluateJavascript(
+            "(function(){if(window.__niaActivatePrimary&&window.__niaActivatePrimary())return;" +
+                "if(window.__niaCursorClick)window.__niaCursorClick();" +
+                "setTimeout(function(){window.__niaResetViewport&&window.__niaResetViewport();},120);" +
+            "})();",
+            null
+        )
     }
 
     private fun isLocal(uri: Uri): Boolean =
