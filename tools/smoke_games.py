@@ -31,13 +31,14 @@ def check_one(chrome: str, game: dict) -> tuple[str, bool, str]:
             "--disable-dev-shm-usage",
             "--allow-file-access-from-files",
             "--window-size=1920,1080",
+            "--virtual-time-budget=600",
             "--user-data-dir=" + profile,
             "--dump-dom",
             target,
         ]
 
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=12)
         except subprocess.TimeoutExpired:
             return game["slug"], False, "timeout"
 
