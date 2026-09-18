@@ -87,9 +87,11 @@ class GameWebView(context: Context) : WebView(context) {
                 postDelayed({
                     evaluateJavascript(
                         "(function(){return document.documentElement.dataset.niaReady==='1'||window.__niaGameReady===true;})();"
-                    ) {
-                        onGameReady?.invoke()
-                        requestFocus()
+                    ) { result ->
+                        if (result == "true") {
+                            onGameReady?.invoke()
+                            requestFocus()
+                        }
                     }
                 }, 520)
             }
