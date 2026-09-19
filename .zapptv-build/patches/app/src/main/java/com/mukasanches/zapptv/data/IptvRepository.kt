@@ -7,6 +7,7 @@ import com.mukasanches.zapptv.model.ProgramSlot
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.InputStreamReader
 
 data class IptvSnapshot(
@@ -32,8 +33,8 @@ class IptvRepository(context: Context) {
     private val epgCache = EpgDiskCache(appContext)
 
     init {
+        seedBundledCache()
         migrateLegacyCache()
-        seedBundledCatalogs()
     }
 
     fun configuredSources(): List<IptvSource> = allSources()
@@ -330,68 +331,52 @@ class IptvRepository(context: Context) {
         return result
     }
 
-    /**
-     * Fresh installs used to expose only the four emergency channels until a
-     * remote M3U download completed. Release builds now carry a build-time
-     * snapshot in assets/bootstrap. Copy it into the normal cache only when a
-     * source has no valid cache yet, so online refreshes continue to replace it
-     * normally and a failed refresh never destroys the last known-good list.
-     */
-    private fun seedBundledCatalogs() {
-        val bundled = runCatching {
-            appContext.assets.list(BOOTSTRAP_ASSET_DIR)?.toList().orEmpty()
-        }.getOrDefault(emptyList())
 
-        if (bundled.isEmpty()) return
+    private fun seedBundledCache() {
+        val source = IptvSourceRegistry.builtIn
+            .firstOrNull { it.id == BOOTSTRAP_SOURCE_ID }
+            ?: return
+        val target = playlistFile(source)
 
-        val sourcesByFile = allSources().associateBy { source ->
-            "playlist-${source.id}.m3u"
-        }
+        val usable = runCatching {
+            target.isFile &&
+                target.length() > 0L &&
+                parsePlaylist(source, target).channels.size >= MIN_BOOTSTRAP_CHANNELS
+        }.getOrDefault(false)
 
-        bundled.forEach { assetName ->
-            val source = sourcesByFile[assetName] ?: return@forEach
-            val target = playlistFile(source)
-            if (target.isFile && target.length() > 0L) return@forEach
+        if (usable) return
 
-            runCatching {
-                val temp = File(target.parentFile, "${target.name}.bootstrap")
-                appContext.assets.open("$BOOTSTRAP_ASSET_DIR/$assetName").use { input ->
-                    temp.outputStream().buffered().use { output ->
-                        input.copyTo(output)
-                    }
+        val temp = File(target.parentFile, "${target.name}.seed")
+        runCatching {
+            appContext.assets.open(BOOTSTRAP_ASSET).use { input ->
+                FileOutputStream(temp).use { output ->
+                    input.copyTo(output)
+                    output.fd.sync()
                 }
-
-                if (temp.length() <= 0L || !isValidPlaylist(temp)) {
-                    temp.delete()
-                    return@runCatching
-                }
-
-                if (!temp.renameTo(target)) {
-                    temp.copyTo(target, overwrite = true)
-                    temp.delete()
-                }
-                target.setLastModified(System.currentTimeMillis())
             }
+
+            require(temp.length() > 0L) { "Catálogo inicial vazio" }
+            if (!temp.renameTo(target)) {
+                temp.copyTo(target, overwrite = true)
+                temp.delete()
+            }
+            target.setLastModified(System.currentTimeMillis())
+        }.onFailure {
+            temp.delete()
         }
     }
 
     private fun migrateLegacyCache() {
         val legacyPlaylist = File(legacyDirectory, "br.m3u")
-        val brazilSource = IptvSourceRegistry.builtIn.firstOrNull { it.id == "iptv-org-br" }
-        if (brazilSource != null) {
-            val target = playlistFile(brazilSource)
-            if (!target.exists() && legacyPlaylist.isFile && legacyPlaylist.length() > 0L) {
-                runCatching { legacyPlaylist.copyTo(target, overwrite = false) }
-            }
+        val primary = playlistFile(IptvSourceRegistry.builtIn.first())
+        if (!primary.exists() && legacyPlaylist.isFile && legacyPlaylist.length() > 0L) {
+            runCatching { legacyPlaylist.copyTo(primary, overwrite = false) }
         }
 
         val legacyEpg = File(legacyDirectory, "br-epg.xml")
-        val brazilEpg = IptvSourceRegistry.epg.firstOrNull { it.id == "iptv-org-br" }
-        if (brazilEpg != null) {
-            val target = epgFile(brazilEpg)
-            if (!target.exists() && legacyEpg.isFile && legacyEpg.length() > 0L) {
-                runCatching { legacyEpg.copyTo(target, overwrite = false) }
-            }
+        val firstEpg = epgFile(IptvSourceRegistry.epg.first())
+        if (!firstEpg.exists() && legacyEpg.isFile && legacyEpg.length() > 0L) {
+            runCatching { legacyEpg.copyTo(firstEpg, overwrite = false) }
         }
     }
 
@@ -457,11 +442,13 @@ class IptvRepository(context: Context) {
         ) != HttpDownloadResult.FAILED
 
     companion object {
-        private const val BOOTSTRAP_ASSET_DIR = "bootstrap"
         private const val PLAYLIST_TTL_MS = 3L * 60L * 60L * 1000L
         private const val EPG_TTL_MS = 3L * 60L * 60L * 1000L
         private const val MAX_PLAYLIST_BYTES = 64L * 1024L * 1024L
         private const val MAX_EPG_BYTES = 96L * 1024L * 1024L
         private const val MAX_EPG_PROGRAMS_PER_CHANNEL = 336
+        private const val BOOTSTRAP_ASSET = "bootstrap-br.m3u"
+        private const val BOOTSTRAP_SOURCE_ID = "iptv-org-br"
+        private const val MIN_BOOTSTRAP_CHANNELS = 50
     }
 }
