@@ -133,9 +133,9 @@ class HttpDownloadEngine(context: Context) {
 
     companion object {
         private const val USER_AGENT = "SANCHESTV/2.9.1 (Android TV)"
-        private const val CONNECT_TIMEOUT_SECONDS = 12L
-        private const val READ_TIMEOUT_SECONDS = 45L
-        private const val CALL_TIMEOUT_SECONDS = 75L
+        private const val CONNECT_TIMEOUT_SECONDS = 5L
+        private const val READ_TIMEOUT_SECONDS = 22L
+        private const val CALL_TIMEOUT_SECONDS = 35L
         private const val HTTP_CACHE_BYTES = 48L * 1024L * 1024L
         private const val GZIP_MAGIC_1 = 0x1f
         private const val GZIP_MAGIC_2 = 0x8b
