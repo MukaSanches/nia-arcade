@@ -12,7 +12,7 @@ KEYSTORE="$RELEASE_DIR/sanchestv-release.jks"
 
 mkdir -p "$TOOLS" "$PUBLIC_DIR" "$RELEASE_DIR"
 
-echo "== SANCHESTV 2.9.1 signed release build =="
+echo "== SANCHESTV 2.9 signed release build =="
 
 : "${SANCHESTV_KEYSTORE_B64:?Missing SANCHESTV_KEYSTORE_B64}"
 : "${SANCHESTV_KEYSTORE_PASSWORD:?Missing SANCHESTV_KEYSTORE_PASSWORD}"
@@ -49,66 +49,6 @@ export PATH="$SDK_DIR/cmdline-tools/latest/bin:$SDK_DIR/platform-tools:$PATH"
 
 yes | sdkmanager --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
 sdkmanager --sdk_root="$SDK_DIR"   "platforms;android-36"   "build-tools;35.0.0"   "platform-tools"
-
-echo "== IPTV first-run bootstrap =="
-BOOTSTRAP_DIR="$ROOT/app/src/main/assets/bootstrap"
-rm -rf "$BOOTSTRAP_DIR"
-mkdir -p "$BOOTSTRAP_DIR"
-
-fetch_bootstrap() {
-  local id="$1"
-  local url="$2"
-  local minimum="$3"
-  local required="$4"
-  local target="$BOOTSTRAP_DIR/playlist-$id.m3u"
-  local temp="$target.tmp"
-
-  echo "Bootstrap $id <- $url"
-  if curl -fL --retry 4 --retry-delay 2 --connect-timeout 15 --max-time 120 "$url" -o "$temp"; then
-    local first_line
-    first_line="$(head -n 1 "$temp" | tr -d '\r\n\357\273\277')"
-    local count
-    count="$(grep -c '^#EXTINF' "$temp" || true)"
-    if [[ "$first_line" == \#EXTM3U* ]] && (( count >= minimum )); then
-      mv "$temp" "$target"
-      echo "Bootstrap $id: $count canais"
-      return 0
-    fi
-    echo "Bootstrap $id inválido: header='$first_line' canais=$count"
-  else
-    echo "Bootstrap $id indisponível no build"
-  fi
-
-  rm -f "$temp"
-  if [[ "$required" == "required" ]]; then
-    echo "ERROR: bootstrap obrigatório $id falhou"
-    exit 1
-  fi
-}
-
-# Catálogo amplo com streams que passaram pelo health check upstream.
-fetch_bootstrap "dearbulut-online" \
-  "https://dearbulut.github.io/iptv/playlists/online.m3u" 1000 required
-
-# Camadas regionais/lusófonas empacotadas quando disponíveis. Elas aparecem
-# imediatamente e também fornecem metadados/alternativas ao catálogo global.
-fetch_bootstrap "iptv-org-br" \
-  "https://iptv-org.github.io/iptv/countries/br.m3u" 20 optional
-fetch_bootstrap "iptv-com-br" \
-  "https://github.com/iptv-com/iptv/raw/refs/heads/main/lists/brazil.m3u" 5 optional
-fetch_bootstrap "pluto-br" \
-  "https://raw.githubusercontent.com/BuddyChewChew/app-m3u-generator/main/playlists/plutotv_br.m3u" 5 optional
-fetch_bootstrap "m3upt-tv" \
-  "https://m3upt.com/iptv" 20 optional
-fetch_bootstrap "iptv-org-pt" \
-  "https://iptv-org.github.io/iptv/languages/por.m3u" 20 optional
-fetch_bootstrap "free-tv" \
-  "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8" 100 optional
-
-BOOTSTRAP_FILES="$(find "$BOOTSTRAP_DIR" -maxdepth 1 -type f -name 'playlist-*.m3u' | wc -l | tr -d ' ')"
-BOOTSTRAP_CHANNELS="$(grep -h '^#EXTINF' "$BOOTSTRAP_DIR"/playlist-*.m3u | wc -l | tr -d ' ')"
-echo "Bootstrap final: $BOOTSTRAP_FILES fontes • $BOOTSTRAP_CHANNELS entradas M3U"
-test "$BOOTSTRAP_CHANNELS" -ge 1000
 
 echo "== Subtitle smoke test: Wikimedia Commons TimedText =="
 SUBTITLE_SMOKE="$(
@@ -164,11 +104,11 @@ grep -q "Verifies" "$PUBLIC_DIR/signature-verification.txt"
 cp "$APK" "$PUBLIC_DIR/SANCHESTV-2.9.1-release.apk"
 (
   cd "$PUBLIC_DIR"
-  sha256sum "SANCHESTV-2.9.1-release.apk" > "SANCHESTV-2.9.0-release.sha256"
+  sha256sum "SANCHESTV-2.9.1-release.apk" > "SANCHESTV-2.9.1-release.sha256"
 )
 
 APK_SIZE="$(du -h "$PUBLIC_DIR/SANCHESTV-2.9.1-release.apk" | cut -f1)"
-APK_SHA="$(cut -d' ' -f1 "$PUBLIC_DIR/SANCHESTV-2.9.0-release.sha256")"
+APK_SHA="$(cut -d' ' -f1 "$PUBLIC_DIR/SANCHESTV-2.9.1-release.sha256")"
 CERT_SHA="$("$APKSIGNER" verify --print-certs "$APK" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n1)"
 
 cat > "$PUBLIC_DIR/release-manifest.json" <<JSON
@@ -178,7 +118,7 @@ cat > "$PUBLIC_DIR/release-manifest.json" <<JSON
   "apkUrl": "https://sanchestv-release.onrender.com/SANCHESTV-2.9.1-release.apk",
   "sha256": "$APK_SHA",
   "certificateSha256": "$CERT_SHA",
-  "notes": "SANCHESTV 2.9.1: correção crítica do catálogo IPTV no primeiro uso, snapshot de canais verificados embutido no APK, fontes FAST atualizadas, deduplicação corrigida e refresh resiliente; Infinite Cinema 2.9 preservado."
+  "notes": "SANCHESTV 2.9 Infinite Cinema: índice persistente, busca universal federada, RightsEngine, deduplicação cross-provider, Internet Archive Deep Discovery, LOC Film & Videos completa, NASA, Europeana e DPLA configuráveis, além dos 23 catálogos da 2.8."
 }
 JSON
 
@@ -188,7 +128,7 @@ cat > "$PUBLIC_DIR/index.html" <<HTML
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>SANCHESTV 2.9.1 Release</title>
+  <title>SANCHESTV 2.9 Release</title>
   <style>
     :root{color-scheme:dark}
     body{margin:0;background:#05070a;color:#f7fafc;font-family:system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh;display:grid;place-items:center}
@@ -202,14 +142,14 @@ cat > "$PUBLIC_DIR/index.html" <<HTML
 <body>
   <main>
     <div class="brand">S▶ SANCHES TV</div>
-    <h1>SANCHESTV 2.9.1</h1>
+    <h1>SANCHESTV 2.9</h1>
     <p class="sub">Android TV / Google TV • Release assinada • R8 otimizado</p>
     <a class="button" href="./SANCHESTV-2.9.1-release.apk">Baixar APK 2.9.1</a>
     <span class="verified">ASSINATURA VERIFICADA</span>
     <div class="meta">
       <div>Tamanho: $APK_SIZE</div>
       <div>Package: com.mukasanches.zapptv</div>
-      <div>VersionCode: 14 • VersionName: 2.9.1</div>
+      <div>VersionCode: 13 • VersionName: 2.9.1</div>
       <div>APK SHA-256:</div>
       <div class="hash">$APK_SHA</div>
       <div>Certificado SHA-256:</div>
