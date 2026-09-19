@@ -20,6 +20,11 @@ for part in sorted(root.glob("part*.json")):
 print(f"reconstructed {count} files")
 PY
 
+if [[ -d "$ROOT/patches" ]]; then
+  echo "overlaying SANCHESTV release patches"
+  cp -R "$ROOT/patches/." "$WORK/"
+fi
+
 cd "$WORK"
 chmod +x render-build.sh
 bash render-build.sh
