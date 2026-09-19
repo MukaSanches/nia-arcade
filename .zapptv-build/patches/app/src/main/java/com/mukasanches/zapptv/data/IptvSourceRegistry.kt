@@ -131,6 +131,23 @@ object IptvSourceRegistry {
         )
     )
 
+    fun merged(remote: List<IptvSource>): List<IptvSource> {
+        val byId = linkedMapOf<String, IptvSource>()
+        builtIn.forEach { byId[it.id] = it }
+        remote.forEach { source ->
+            if (
+                source.id.isNotBlank() &&
+                source.url.startsWith("https://", ignoreCase = true)
+            ) {
+                byId[source.id] = source
+            }
+        }
+        return byId.values
+            .distinctBy { it.url.lowercase() }
+            .sortedByDescending { it.priority }
+            .take(64)
+    }
+
     val epg: List<EpgSource> = listOf(
         EpgSource(
             id = "dearbulut-br",
