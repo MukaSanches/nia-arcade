@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "updatedBy": "SANCHESTV",
+  "sources": [
+    {
+      "id": "iptv-org-br",
+      "name": "IPTV-org Brasil",
+      "url": "https://iptv-org.github.io/iptv/countries/br.m3u",
+      "priority": 120,
+      "market": "Brasil",
+      "enabled": true
+    },
+    {
+      "id": "iptv-com-br",
+      "name": "IPTV-com Brasil",
+      "url": "https://raw.githubusercontent.com/iptv-com/iptv/main/lists/brazil.m3u",
+      "priority": 118,
+      "market": "Brasil",
+      "enabled": true
+    },
+    {
+      "id": "free-tv",
+      "name": "Free-TV",
+      "url": "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8",
+      "priority": 110,
+      "market": "Mundo • gratuito",
+      "enabled": true
+    },
+    {
+      "id": "m3upt-tv",
+      "name": "M3UPT",
+      "url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/main/M3U/M3UPT.m3u",
+      "priority": 108,
+      "market": "Portugal • lusófono",
+      "enabled": true,
+      "groupFilter": "TV"
+    },
+    {
+      "id": "iptv-org-pt",
+      "name": "IPTV-org Português",
+      "url": "https://iptv-org.github.io/iptv/languages/por.m3u",
+      "priority": 105,
+      "market": "Português",
+      "enabled": true
+    },
+    {
+      "id": "pluto-fast",
+      "name": "Pluto TV FAST",
+      "url": "https://raw.githubusercontent.com/insa-ship-it/app-m3u-generator/main/playlists/plutotv_all.m3u",
+      "priority": 96,
+      "market": "FAST • global",
+      "enabled": true
+    },
+    {
+      "id": "plex-fast",
+      "name": "Plex TV FAST",
+      "url": "https://raw.githubusercontent.com/insa-ship-it/app-m3u-generator/main/playlists/plex_all.m3u",
+      "priority": 94,
+      "market": "FAST • global",
+      "enabled": true
+    },
+    {
+      "id": "samsung-fast",
+      "name": "Samsung TV Plus FAST",
+      "url": "https://raw.githubusercontent.com/insa-ship-it/app-m3u-generator/main/playlists/samsungtvplus_all.m3u",
+      "priority": 92,
+      "market": "FAST • global",
+      "enabled": true
+    },
+    {
+      "id": "roku-fast",
+      "name": "Roku FAST",
+      "url": "https://raw.githubusercontent.com/insa-ship-it/app-m3u-generator/main/playlists/roku_all.m3u",
+      "priority": 90,
+      "market": "FAST • global",
+      "enabled": true
+    },
+    {
+      "id": "iptv-org-global",
+      "name": "IPTV-org Global",
+      "url": "https://iptv-org.github.io/iptv/index.m3u",
+      "priority": 80,
+      "market": "Mundo",
+      "enabled": true
+    },
+    {
+      "id": "dearbulut-best",
+      "name": "Health-checked fallback",
+      "url": "https://dearbulut.github.io/iptv/playlists/best.m3u",
+      "priority": 55,
+      "market": "Fallback • verificado",
+      "enabled": true,
+      "healthChecked": true
+    }
+  ]
+}
