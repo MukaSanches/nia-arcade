@@ -377,15 +377,21 @@ class IptvRepository(context: Context) {
 
     private fun migrateLegacyCache() {
         val legacyPlaylist = File(legacyDirectory, "br.m3u")
-        val primary = playlistFile(IptvSourceRegistry.builtIn.first())
-        if (!primary.exists() && legacyPlaylist.isFile && legacyPlaylist.length() > 0L) {
-            runCatching { legacyPlaylist.copyTo(primary, overwrite = false) }
+        val brazilSource = IptvSourceRegistry.builtIn.firstOrNull { it.id == "iptv-org-br" }
+        if (brazilSource != null) {
+            val target = playlistFile(brazilSource)
+            if (!target.exists() && legacyPlaylist.isFile && legacyPlaylist.length() > 0L) {
+                runCatching { legacyPlaylist.copyTo(target, overwrite = false) }
+            }
         }
 
         val legacyEpg = File(legacyDirectory, "br-epg.xml")
-        val firstEpg = epgFile(IptvSourceRegistry.epg.first())
-        if (!firstEpg.exists() && legacyEpg.isFile && legacyEpg.length() > 0L) {
-            runCatching { legacyEpg.copyTo(firstEpg, overwrite = false) }
+        val brazilEpg = IptvSourceRegistry.epg.firstOrNull { it.id == "iptv-org-br" }
+        if (brazilEpg != null) {
+            val target = epgFile(brazilEpg)
+            if (!target.exists() && legacyEpg.isFile && legacyEpg.length() > 0L) {
+                runCatching { legacyEpg.copyTo(target, overwrite = false) }
+            }
         }
     }
 
